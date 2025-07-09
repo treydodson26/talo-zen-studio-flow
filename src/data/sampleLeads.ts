@@ -9,13 +9,11 @@ export const sampleLeads: Lead[] = [
     source: "qr_code",
     stage: "new",
     created_at: "2024-01-15T10:30:00Z",
-    last_contact: null,
     assigned_staff: "Emily",
     notes: "Interested in morning vinyasa classes. Mentioned previous yoga experience.",
-    interests: ["vinyasa", "morning_classes"],
-    sequence_status: "welcome",
-    next_followup: "2024-01-15T14:30:00Z",
-    conversion_probability: 75
+    interests: "vinyasa, morning classes",
+    conversion_probability: 75,
+    estimated_value: 150
   },
   {
     id: "2",
@@ -25,13 +23,11 @@ export const sampleLeads: Lead[] = [
     source: "google",
     stage: "contacted",
     created_at: "2024-01-14T09:15:00Z",
-    last_contact: "2024-01-14T16:20:00Z",
     assigned_staff: "Emily",
     notes: "Complete beginner, looking for stress relief. Works long hours.",
-    interests: ["beginner", "stress_relief", "evening_classes"],
-    sequence_status: "welcome",
-    next_followup: "2024-01-16T18:00:00Z",
-    conversion_probability: 60
+    interests: "beginner, stress relief, evening classes",
+    conversion_probability: 60,
+    estimated_value: 120
   },
   {
     id: "3",
@@ -41,13 +37,11 @@ export const sampleLeads: Lead[] = [
     source: "referral",
     stage: "nurturing",
     created_at: "2024-01-10T14:45:00Z",
-    last_contact: "2024-01-12T11:30:00Z",
     assigned_staff: "Emily",
     notes: "Referred by existing member Jessica. Interested in prenatal yoga.",
-    interests: ["prenatal", "gentle_yoga"],
-    sequence_status: "nurture",
-    next_followup: "2024-01-17T10:00:00Z",
-    conversion_probability: 85
+    interests: "prenatal, gentle yoga",
+    conversion_probability: 85,
+    estimated_value: 180
   },
   {
     id: "4",
@@ -57,13 +51,12 @@ export const sampleLeads: Lead[] = [
     source: "walk_in",
     stage: "converted",
     created_at: "2024-01-08T13:20:00Z",
-    last_contact: "2024-01-13T15:45:00Z",
     assigned_staff: "Emily",
     notes: "Converted! Purchased unlimited monthly package. Loves power yoga.",
-    interests: ["power_yoga", "fitness"],
-    sequence_status: "completed",
-    next_followup: null,
-    conversion_probability: 100
+    interests: "power yoga, fitness",
+    conversion_probability: 100,
+    estimated_value: 200,
+    converted_at: "2024-01-13T15:45:00Z"
   },
   {
     id: "5",
@@ -73,13 +66,11 @@ export const sampleLeads: Lead[] = [
     source: "social_media",
     stage: "lost",
     created_at: "2024-01-05T16:10:00Z",
-    last_contact: "2024-01-12T09:15:00Z",
     assigned_staff: "Emily",
     notes: "No response to multiple follow-ups. Marked as lost.",
-    interests: ["meditation", "mindfulness"],
-    sequence_status: "completed",
-    next_followup: null,
-    conversion_probability: 0
+    interests: "meditation, mindfulness",
+    conversion_probability: 0,
+    estimated_value: 0
   },
   {
     id: "6",
@@ -89,13 +80,11 @@ export const sampleLeads: Lead[] = [
     source: "qr_code",
     stage: "new",
     created_at: "2024-01-15T11:45:00Z",
-    last_contact: null,
     assigned_staff: "Emily",
     notes: "New lead from QR code scan. No additional info yet.",
-    interests: [],
-    sequence_status: "welcome",
-    next_followup: "2024-01-15T15:45:00Z",
-    conversion_probability: 50
+    interests: "",
+    conversion_probability: 50,
+    estimated_value: 100
   },
   {
     id: "7",
@@ -105,13 +94,11 @@ export const sampleLeads: Lead[] = [
     source: "google",
     stage: "contacted",
     created_at: "2024-01-13T08:30:00Z",
-    last_contact: "2024-01-14T10:20:00Z",
     assigned_staff: "Emily",
     notes: "Responded to welcome email. Interested in restorative yoga.",
-    interests: ["restorative", "relaxation"],
-    sequence_status: "welcome",
-    next_followup: "2024-01-16T17:00:00Z",
-    conversion_probability: 70
+    interests: "restorative, relaxation",
+    conversion_probability: 70,
+    estimated_value: 140
   },
   {
     id: "8",
@@ -121,13 +108,11 @@ export const sampleLeads: Lead[] = [
     source: "referral",
     stage: "nurturing",
     created_at: "2024-01-11T12:15:00Z",
-    last_contact: "2024-01-14T14:30:00Z",
     assigned_staff: "Emily",
     notes: "Attended trial class. Considering membership options.",
-    interests: ["trial_completed", "membership"],
-    sequence_status: "nurture",
-    next_followup: "2024-01-18T09:00:00Z",
-    conversion_probability: 90
+    interests: "trial completed, membership",
+    conversion_probability: 90,
+    estimated_value: 180
   },
   {
     id: "9",
@@ -137,13 +122,11 @@ export const sampleLeads: Lead[] = [
     source: "walk_in",
     stage: "contacted",
     created_at: "2024-01-12T15:45:00Z",
-    last_contact: "2024-01-13T11:15:00Z",
     assigned_staff: "Emily",
     notes: "Walked in asking about classes. Sent welcome package.",
-    interests: ["schedule_info", "pricing"],
-    sequence_status: "welcome",
-    next_followup: "2024-01-16T12:00:00Z",
-    conversion_probability: 65
+    interests: "schedule info, pricing",
+    conversion_probability: 65,
+    estimated_value: 130
   },
   {
     id: "10",
@@ -153,13 +136,11 @@ export const sampleLeads: Lead[] = [
     source: "social_media",
     stage: "nurturing",
     created_at: "2024-01-09T10:20:00Z",
-    last_contact: "2024-01-13T16:45:00Z",
     assigned_staff: "Emily",
     notes: "Engaged with social media posts. Interested in men's yoga classes.",
-    interests: ["mens_yoga", "community"],
-    sequence_status: "nurture",
-    next_followup: "2024-01-17T19:00:00Z",
-    conversion_probability: 55
+    interests: "mens yoga, community",
+    conversion_probability: 55,
+    estimated_value: 110
   }
 ];
 

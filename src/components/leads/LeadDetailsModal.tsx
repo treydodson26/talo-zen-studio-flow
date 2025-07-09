@@ -219,12 +219,14 @@ export function LeadDetailsModal({ lead, onClose, onUpdate }: LeadDetailsModalPr
               <CardContent className="space-y-4">
                 <div>
                   <Label>Interests</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {lead.interests.map((interest, index) => (
-                      <Badge key={index} variant="secondary">
-                        {interest.replace('_', ' ')}
+                  <div className="mt-2">
+                    {lead.interests ? (
+                      <Badge variant="secondary">
+                        {lead.interests}
                       </Badge>
-                    ))}
+                    ) : (
+                      <span className="text-muted-foreground text-sm">None specified</span>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -320,29 +322,6 @@ export function LeadDetailsModal({ lead, onClose, onUpdate }: LeadDetailsModalPr
                   <ArrowRight className="h-4 w-4 mr-2" />
                   Convert to Customer
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Sequence Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Sequence Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Current:</span>
-                    <Badge variant="outline">{lead.sequence_status}</Badge>
-                  </div>
-                  {lead.next_followup && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Next:</span>
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(lead.next_followup), 'MMM dd, h:mm a')}
-                      </span>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
 

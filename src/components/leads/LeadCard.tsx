@@ -68,13 +68,6 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
             </div>
           </div>
 
-          {/* Next Follow-up */}
-          {lead.next_followup && (
-            <div className="text-sm text-primary bg-primary/10 px-3 py-2 rounded-md">
-              Next: {format(new Date(lead.next_followup), 'MMM dd, h:mm a')}
-            </div>
-          )}
-
           {/* Quick Actions */}
           <div className="flex space-x-2 pt-2">
             <Button
