@@ -51,7 +51,7 @@ export function Alerts() {
       <CardContent>
         <div className="space-y-4">
           {alerts.map((alert) => (
-            <Alert key={alert.id} className={`border ${alert.urgent ? 'border-destructive/50 bg-destructive/5' : 'border-border'}`}>
+            <Alert key={alert.id} className={`border ${alert.urgent ? 'border-destructive bg-destructive/10' : 'border-border bg-card'}`}>
               <alert.icon className={`h-4 w-4 ${alert.urgent ? 'text-destructive' : 'text-primary'}`} />
               <AlertDescription className="flex items-center justify-between">
                 <div className="space-y-1">

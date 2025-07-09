@@ -16,32 +16,32 @@ export function Header() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-foreground rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center border border-border">
                 <span className="text-primary font-bold text-sm">T</span>
               </div>
-              <h1 className="text-2xl font-bold text-primary-foreground">
+              <h1 className="text-2xl font-bold text-foreground">
                 Talo Yoga Studio
               </h1>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
+            <Button variant="ghost" size="icon" className="text-foreground hover:bg-accent hover:text-accent-foreground">
               <Bell className="h-5 w-5" />
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button variant="ghost" className="flex items-center space-x-2 text-foreground hover:bg-accent hover:text-accent-foreground">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary-foreground text-primary">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
                       EM
                     </AvatarFallback>
                   </Avatar>
                   <span>Emily</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-popover border-border">
                 <DropdownMenuItem>
                   <User className="mr-2 h-4 w-4" />
                   Profile
