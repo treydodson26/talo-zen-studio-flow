@@ -70,28 +70,28 @@ export function LeadPipeline() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">{stats.total_leads}</div>
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.total_leads}</div>
               <div className="text-sm text-muted-foreground">Total Leads</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">{stats.new_leads}</div>
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.new_leads}</div>
               <div className="text-sm text-muted-foreground">New This Week</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">{stats.conversion_rate.toFixed(1)}%</div>
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.conversion_rate.toFixed(1)}%</div>
               <div className="text-sm text-muted-foreground">Conversion Rate</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold text-foreground">{stats.avg_time_to_convert}d</div>
+            <CardContent className="p-6">
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.avg_time_to_convert}d</div>
               <div className="text-sm text-muted-foreground">Avg. Time to Convert</div>
             </CardContent>
           </Card>
@@ -139,22 +139,22 @@ export function LeadPipeline() {
         </Card>
 
         {/* Pipeline Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2 gap-6">
           {stages.map((stage) => {
             const stageLeads = filteredLeads.filter(lead => lead.stage === stage.id);
             
             return (
-              <Card key={stage.id} className="h-fit">
-                <CardHeader className="pb-3">
+              <Card key={stage.id} className="h-fit min-h-[400px]">
+                <CardHeader className="pb-4">
                   <CardTitle className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{stage.name}</span>
+                    <span className="text-lg font-semibold">{stage.name}</span>
                     <Badge className={stage.color}>
                       {stageLeads.length}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                  <div className="space-y-4 max-h-[700px] overflow-y-auto">
                     {stageLeads.map((lead) => (
                       <LeadCard
                         key={lead.id}
@@ -164,7 +164,7 @@ export function LeadPipeline() {
                       />
                     ))}
                     {stageLeads.length === 0 && (
-                      <div className="text-center text-muted-foreground py-8">
+                      <div className="text-center text-muted-foreground py-12">
                         <p className="text-sm">No leads in this stage</p>
                       </div>
                     )}

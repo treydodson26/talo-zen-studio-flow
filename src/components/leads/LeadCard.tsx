@@ -41,64 +41,37 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
 
   return (
     <Card 
-      className="mb-3 cursor-pointer hover:shadow-soft transition-shadow bg-card border-border/50"
+      className="mb-4 cursor-pointer hover:shadow-soft transition-shadow bg-card border-border/50"
       onClick={() => onViewDetails(lead)}
     >
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className="p-5">
+        <div className="space-y-4">
           {/* Header */}
           <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-medium text-card-foreground">{lead.name}</h3>
-              <p className="text-sm text-muted-foreground">{lead.email}</p>
+            <div className="flex-1">
+              <h3 className="font-semibold text-card-foreground text-base">{lead.name}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lead.email}</p>
             </div>
-            <div className="flex flex-col items-end space-y-1">
-              <Badge className={sourceColors[lead.source]}>
-                {sourceLabels[lead.source]}
-              </Badge>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <Clock className="h-3 w-3 mr-1" />
-                {daysInPipeline}d
-              </div>
-            </div>
+            <Badge className={sourceColors[lead.source]}>
+              {sourceLabels[lead.source]}
+            </Badge>
           </div>
 
-          {/* Contact Info */}
+          {/* Pipeline Info */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center text-muted-foreground">
-              <Phone className="h-3 w-3 mr-1" />
-              {lead.phone}
+              <Clock className="h-4 w-4 mr-1" />
+              <span>{daysInPipeline} days</span>
             </div>
-            <div className="flex items-center text-muted-foreground">
-              <User className="h-3 w-3 mr-1" />
-              {lead.assigned_staff}
-            </div>
-          </div>
-
-          {/* Sequence Status */}
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className={sequenceColors[lead.sequence_status]}>
-              {lead.sequence_status === 'welcome' && 'Welcome Sequence'}
-              {lead.sequence_status === 'nurture' && 'Nurture Sequence'}
-              {lead.sequence_status === 'completed' && 'Completed'}
-              {lead.sequence_status === 'none' && 'No Sequence'}
-            </Badge>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-primary font-medium">
               {lead.conversion_probability}% likely
             </div>
           </div>
 
-          {/* Last Contact */}
-          {lead.last_contact && (
-            <div className="text-xs text-muted-foreground">
-              Last contact: {formatDistanceToNow(new Date(lead.last_contact), { addSuffix: true })}
-            </div>
-          )}
-
           {/* Next Follow-up */}
           {lead.next_followup && (
-            <div className="text-xs text-primary">
-              Next follow-up: {format(new Date(lead.next_followup), 'MMM dd, h:mm a')}
+            <div className="text-sm text-primary bg-primary/10 px-3 py-2 rounded-md">
+              Next: {format(new Date(lead.next_followup), 'MMM dd, h:mm a')}
             </div>
           )}
 
@@ -112,8 +85,7 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
                 onQuickAction(lead.id, 'email');
               }}
             >
-              <Mail className="h-3 w-3 mr-1" />
-              Email
+              <Mail className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
@@ -123,8 +95,7 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
                 onQuickAction(lead.id, 'sms');
               }}
             >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              SMS
+              <MessageSquare className="h-4 w-4" />
             </Button>
             <Button
               size="sm"
@@ -134,8 +105,7 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
                 onQuickAction(lead.id, 'schedule');
               }}
             >
-              <Calendar className="h-3 w-3 mr-1" />
-              Schedule
+              <Calendar className="h-4 w-4" />
             </Button>
           </div>
         </div>
