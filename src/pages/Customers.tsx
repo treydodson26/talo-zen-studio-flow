@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Customer, CustomerFilters } from '@/types/customers';
-import { sampleCustomers } from '@/data/sampleCustomers';
+import { supabase } from '@/integrations/supabase/client';
 import { CustomerProfileModal } from '@/components/customers/CustomerProfileModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,9 @@ import {
 } from 'lucide-react';
 
 export default function Customers() {
-  const [customers] = useState<Customer[]>(sampleCustomers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [filters, setFilters] = useState<CustomerFilters>({
@@ -46,6 +48,75 @@ export default function Customers() {
     segment: 'All',
     dateFilter: 'All',
   });
+
+  // Fetch customers from Supabase
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching customers:', error);
+          setError('Failed to load customers');
+          return;
+        }
+
+        // Transform Supabase data to Customer interface
+        const transformedCustomers: Customer[] = (data || []).map((client) => ({
+          id: client.id,
+          name: client["Client Name"] || `${client["First Name"] || ''} ${client["Last Name"] || ''}`.trim() || 'Unknown',
+          email: client["Client Email"] || '',
+          phone: client["Phone Number"] || '',
+          address: client.Address || '',
+          status: determineStatus(client),
+          segment: determineSegment(client),
+          lastVisit: client["Last Seen"] || new Date().toISOString().split('T')[0],
+          classesThisMonth: 0, // This would need to be calculated from class attendance data
+          totalClasses: parseInt(client["Pre-Arketa Milestone Count"]) || 0,
+          attendanceRate: 0, // This would need to be calculated
+          favoriteClass: 'Unknown',
+          memberSince: client["First Seen"] || client.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          currentPlan: 'Unknown',
+          autoRenewal: false,
+          notes: client.Tags || '',
+          avatar: undefined
+        }));
+
+        setCustomers(transformedCustomers);
+      } catch (err) {
+        console.error('Error:', err);
+        setError('Failed to load customers');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  // Helper function to determine customer status
+  const determineStatus = (client: any): Customer['status'] => {
+    if (client["Marketing Email Opt-in"] === 'Yes' || client["Marketing Text Opt In"] === 'Yes') {
+      return 'Active';
+    }
+    return 'Trial';
+  };
+
+  // Helper function to determine customer segment
+  const determineSegment = (client: any): Customer['segment'] => {
+    const tags = client.Tags?.toLowerCase() || '';
+    if (tags.includes('prenatal')) return 'Prenatal';
+    if (tags.includes('senior')) return 'Seniors';
+    if (tags.includes('student')) return 'Students';
+    if (tags.includes('professional')) return 'Professionals';
+    return 'General';
+  };
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
@@ -143,7 +214,7 @@ export default function Customers() {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Customer Management</h1>
             <Badge variant="secondary" className="bg-primary/10 text-primary">
-              930 Active Customers
+              {loading ? 'Loading...' : `${customers.length} Customers`}
             </Badge>
           </div>
         </div>
@@ -210,76 +281,94 @@ export default function Customers() {
 
       {/* Table */}
       <div className="bg-surface rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Segment</TableHead>
-              <TableHead>Last Visit</TableHead>
-              <TableHead>Classes This Month</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCustomers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-sm font-medium">
-                      {customer.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div>
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-sm text-muted-foreground">{customer.email}</div>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(customer.status)}>
-                    {customer.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={getSegmentColor(customer.segment)}>
-                    {customer.segment}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <span className={isRecentVisit(customer.lastVisit) ? 'text-danger font-medium' : ''}>
-                    {new Date(customer.lastVisit).toLocaleDateString()}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="font-medium">{customer.classesThisMonth}</span>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewProfile(customer)}>
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSendMessage(customer)}>
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Send Message
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleUpdateStatus(customer)}>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Update Status
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {loading ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-muted-foreground">Loading customers...</div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-destructive">{error}</div>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Customer</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Segment</TableHead>
+                <TableHead>Last Visit</TableHead>
+                <TableHead>Total Classes</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredCustomers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    No customers found matching your filters.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCustomers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-sm font-medium">
+                          {customer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-medium">{customer.name}</div>
+                          <div className="text-sm text-muted-foreground">{customer.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(customer.status)}>
+                        {customer.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getSegmentColor(customer.segment)}>
+                        {customer.segment}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className={isRecentVisit(customer.lastVisit) ? 'text-danger font-medium' : ''}>
+                        {new Date(customer.lastVisit).toLocaleDateString()}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium">{customer.totalClasses}</span>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewProfile(customer)}>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleSendMessage(customer)}>
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Send Message
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleUpdateStatus(customer)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Update Status
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       {/* Customer Profile Modal */}
