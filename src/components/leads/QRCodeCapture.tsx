@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { QrCode, CheckCircle, Copy, ExternalLink } from "lucide-react";
 
 export function QRCodeCapture() {
@@ -28,15 +29,50 @@ export function QRCodeCapture() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Save lead to Supabase
+      const { data, error } = await supabase
+        .from('leads')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            source: formData.source || 'qr_code',
+            interests: formData.interests,
+            notes: formData.notes,
+            stage: 'new'
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error('Error creating lead:', error);
+        toast({
+          title: "Error",
+          description: "There was an issue submitting your information. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Lead created successfully:', data);
       setIsSubmitted(true);
       toast({
         title: "Welcome to Talo Yoga Studio!",
         description: "We'll be in touch soon to help you start your yoga journey.",
       });
-    }, 1000);
+
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCopyUrl = () => {

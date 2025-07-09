@@ -77,6 +77,60 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          assigned_staff: string | null
+          contacted_at: string | null
+          conversion_probability: number | null
+          converted_at: string | null
+          created_at: string
+          email: string
+          estimated_value: number | null
+          id: string
+          interests: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          source: string | null
+          stage: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_staff?: string | null
+          contacted_at?: string | null
+          conversion_probability?: number | null
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          estimated_value?: number | null
+          id?: string
+          interests?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_staff?: string | null
+          contacted_at?: string | null
+          conversion_probability?: number | null
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          estimated_value?: number | null
+          id?: string
+          interests?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
