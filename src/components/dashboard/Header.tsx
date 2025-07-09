@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router-dom";
 import { Bell, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,19 +11,47 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Header() {
+  const location = useLocation();
+  
+  const navigation = [
+    { name: 'Dashboard', href: '/' },
+    { name: 'Leads', href: '/leads' },
+    { name: 'Customers', href: '/customers' },
+    { name: 'Classes', href: '/classes' },
+    { name: 'Analytics', href: '/analytics' },
+  ];
+
+  const isActive = (href: string) => location.pathname === href;
+
   return (
     <header className="bg-gradient-primary border-b border-border shadow-soft">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center border border-border">
                 <span className="text-primary font-bold text-sm">T</span>
               </div>
               <h1 className="text-2xl font-bold text-foreground">
                 Talo Yoga Studio
               </h1>
-            </div>
+            </Link>
+            
+            <nav className="hidden md:flex space-x-6">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`text-sm font-medium transition-colors hover:text-foreground ${
+                    isActive(item.href) 
+                      ? 'text-foreground border-b-2 border-primary pb-1' 
+                      : 'text-foreground/70'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           <div className="flex items-center space-x-4">
