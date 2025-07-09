@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LeadCard } from "./LeadCard";
 import { LeadDetailsModal } from "./LeadDetailsModal";
+import { QuickActionModal } from "./QuickActionModal";
 import { Lead } from "@/types/leads";
 import { sampleLeads, getLeadsByStage, getLeadStats } from "@/data/sampleLeads";
 import { Search, Filter, Plus, BarChart3 } from "lucide-react";
@@ -20,6 +21,8 @@ const stages = [
 
 export function LeadPipeline() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [quickActionLead, setQuickActionLead] = useState<Lead | null>(null);
+  const [quickActionType, setQuickActionType] = useState<'email' | 'sms' | 'schedule' | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [staffFilter, setStaffFilter] = useState("all");
@@ -40,8 +43,22 @@ export function LeadPipeline() {
   };
 
   const handleQuickAction = (leadId: string, action: string) => {
-    console.log(`Quick action: ${action} for lead ${leadId}`);
-    // TODO: Implement quick actions
+    const lead = sampleLeads.find(l => l.id === leadId);
+    if (lead) {
+      setQuickActionLead(lead);
+      setQuickActionType(action as 'email' | 'sms' | 'schedule');
+    }
+  };
+
+  const handleQuickActionComplete = (leadId: string, action: string, data: any) => {
+    console.log(`Quick action completed: ${action} for lead ${leadId}`, data);
+    // TODO: Update lead with interaction data
+    // In a real app, this would update the lead in the database
+  };
+
+  const handleCloseQuickAction = () => {
+    setQuickActionLead(null);
+    setQuickActionType(null);
   };
 
   const handleCloseModal = () => {
@@ -186,6 +203,14 @@ export function LeadPipeline() {
             }}
           />
         )}
+
+        {/* Quick Action Modal */}
+        <QuickActionModal
+          lead={quickActionLead}
+          action={quickActionType}
+          onClose={handleCloseQuickAction}
+          onComplete={handleQuickActionComplete}
+        />
       </div>
     </div>
   );
