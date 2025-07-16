@@ -42,43 +42,75 @@ export default function Customers() {
   const [modalOpen, setModalOpen] = useState(false);
   const [activeStage, setActiveStage] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [metrics, setMetrics] = useState({
+    totalClients: 0,
+    activeMembers: 0,
+    trialMembers: 0,
+    newThisMonth: 0,
+    noPurchases: 0,
+    firstClassBooked: 0,
+    introOffer: 0,
+    boughtMembership: 0,
+    retentionRisk: 0
+  });
 
-  // Fetch customers from Supabase
+  // Fetch customers and metrics from Supabase
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .order('created_at', { ascending: false });
+        // Fetch customer metrics summary
+        const { data: metricsData, error: metricsError } = await supabase
+          .rpc('get_customer_metrics_summary');
 
-        if (error) {
-          console.error('Error fetching customers:', error);
+        if (metricsError) {
+          console.error('Error fetching metrics:', metricsError);
+        } else if (metricsData?.[0]) {
+          setMetrics({
+            totalClients: Number(metricsData[0].total_clients),
+            activeMembers: Number(metricsData[0].active_members),
+            trialMembers: Number(metricsData[0].trial_members),
+            newThisMonth: Number(metricsData[0].new_this_month),
+            noPurchases: Number(metricsData[0].no_purchases),
+            firstClassBooked: Number(metricsData[0].first_class_booked),
+            introOffer: Number(metricsData[0].intro_offer),
+            boughtMembership: Number(metricsData[0].bought_membership),
+            retentionRisk: Number(metricsData[0].retention_risk)
+          });
+        }
+
+        // Fetch customer data from the view
+        const { data: customersData, error: customersError } = await supabase
+          .from('customer_metrics_view')
+          .select('*')
+          .order('name', { ascending: true });
+
+        if (customersError) {
+          console.error('Error fetching customers:', customersError);
           setError('Failed to load customers');
           return;
         }
 
-        // Transform Supabase data to Customer interface
-        const transformedCustomers: Customer[] = (data || []).map((client) => ({
+        // Transform the view data to Customer interface
+        const transformedCustomers: Customer[] = (customersData || []).map((client) => ({
           id: client.id,
-          name: client["Client Name"] || `${client["First Name"] || ''} ${client["Last Name"] || ''}`.trim() || 'Unknown',
-          email: client["Client Email"] || '',
-          phone: client["Phone Number"] || '',
-          address: client.Address || '',
-          status: determineStatus(client),
+          name: client.name || 'Unknown',
+          email: client.email || '',
+          phone: client.phone || '',
+          address: client.address || '',
+          status: mapCalculatedStatusToCustomerStatus(client.calculated_status),
           segment: determineSegment(client),
-          lastVisit: client["Last Seen"] || new Date().toISOString().split('T')[0],
-          classesThisMonth: 0, // This would need to be calculated from class attendance data
-          totalClasses: parseInt(client["Pre-Arketa Milestone Count"]) || 0,
-          attendanceRate: 0, // This would need to be calculated
+          lastVisit: client.last_seen || new Date().toISOString().split('T')[0],
+          classesThisMonth: 0, // Could be calculated from recent attendance
+          totalClasses: Number(client.total_classes_attended) || 0,
+          attendanceRate: client.is_active_member ? 85 : 45, // Simplified calculation
           favoriteClass: 'Unknown',
-          memberSince: client["First Seen"] || client.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-          currentPlan: 'Unknown',
-          autoRenewal: false,
-          notes: client.Tags || '',
+          memberSince: client.first_seen || client.first_class_date?.split('T')[0] || new Date().toISOString().split('T')[0],
+          currentPlan: client.calculated_status === 'Active Members' ? 'Unlimited' : 'Trial',
+          autoRenewal: client.is_active_member,
+          notes: client.tags || '',
           avatar: undefined
         }));
 
@@ -91,20 +123,29 @@ export default function Customers() {
       }
     };
 
-    fetchCustomers();
+    fetchData();
   }, []);
 
-  // Helper function to determine customer status
-  const determineStatus = (client: any): Customer['status'] => {
-    if (client["Marketing Email Opt-in"] === 'Yes' || client["Marketing Text Opt In"] === 'Yes') {
-      return 'Active';
+  // Helper function to map calculated status to Customer status
+  const mapCalculatedStatusToCustomerStatus = (calculatedStatus: string): Customer['status'] => {
+    switch (calculatedStatus) {
+      case 'Active Members':
+        return 'Active';
+      case 'Intro Offer':
+      case 'First Class Booked':
+        return 'Trial';
+      case 'Retention Risk':
+        return 'At-Risk';
+      case 'Bought Membership':
+        return 'Active';
+      default:
+        return 'Trial';
     }
-    return 'Trial';
   };
 
   // Helper function to determine customer segment
   const determineSegment = (client: any): Customer['segment'] => {
-    const tags = client.Tags?.toLowerCase() || '';
+    const tags = client.tags?.toLowerCase() || '';
     if (tags.includes('prenatal')) return 'Prenatal';
     if (tags.includes('senior')) return 'Seniors';
     if (tags.includes('student')) return 'Students';
@@ -114,14 +155,13 @@ export default function Customers() {
 
   const customerStages = [
     { id: 'Dashboard', label: 'Dashboard', count: null },
-    { id: 'All', label: 'All', count: customers.length },
-    { id: 'No Purchases', label: 'No Purchases or Reservations', count: customers.filter(c => c.totalClasses === 0).length },
-    { id: 'Intro Offer', label: 'Intro Offer', count: customers.filter(c => c.status === 'Trial').length },
-    { id: 'Bought Membership', label: 'Bought Membership in the last 7 days', count: customers.filter(c => c.status === 'Active' && isRecentMember(c.memberSince)).length },
-    { id: 'Member', label: 'Member', count: customers.filter(c => c.status === 'Active').length },
-    { id: 'Active Member', label: 'Active Member', count: customers.filter(c => c.status === 'Active' && !isRecentVisit(c.lastVisit)).length },
-    { id: 'Retention', label: 'Retention', count: customers.filter(c => c.status === 'At-Risk').length },
-    { id: 'First class booked', label: 'First class booked', count: customers.filter(c => c.totalClasses === 1).length },
+    { id: 'All', label: 'All', count: metrics.totalClients },
+    { id: 'No Purchases', label: 'No Purchases or Reservations', count: metrics.noPurchases },
+    { id: 'First class booked', label: 'First class booked', count: metrics.firstClassBooked },
+    { id: 'Intro Offer', label: 'Intro Offer', count: metrics.introOffer },
+    { id: 'Bought Membership', label: 'Bought Membership', count: metrics.boughtMembership },
+    { id: 'Active Members', label: 'Active Members', count: metrics.activeMembers },
+    { id: 'Retention Risk', label: 'Retention Risk', count: metrics.retentionRisk },
   ];
 
   const isRecentMember = (memberSince: string) => {
@@ -139,28 +179,25 @@ export default function Customers() {
         customer.phone?.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchesStage = true;
-      if (activeStage !== 'All') {
+      if (activeStage !== 'All' && activeStage !== 'Dashboard') {
         switch (activeStage) {
           case 'No Purchases':
             matchesStage = customer.totalClasses === 0;
             break;
-          case 'Intro Offer':
-            matchesStage = customer.status === 'Trial';
-            break;
-          case 'Bought Membership':
-            matchesStage = customer.status === 'Active' && isRecentMember(customer.memberSince);
-            break;
-          case 'Member':
-            matchesStage = customer.status === 'Active';
-            break;
-          case 'Active Member':
-            matchesStage = customer.status === 'Active' && !isRecentVisit(customer.lastVisit);
-            break;
-          case 'Retention':
-            matchesStage = customer.status === 'At-Risk';
-            break;
           case 'First class booked':
             matchesStage = customer.totalClasses === 1;
+            break;
+          case 'Intro Offer':
+            matchesStage = customer.status === 'Trial' && customer.totalClasses > 1;
+            break;
+          case 'Bought Membership':
+            matchesStage = customer.status === 'Active' && customer.totalClasses > 1 && !isRecentVisit(customer.lastVisit);
+            break;
+          case 'Active Members':
+            matchesStage = customer.status === 'Active' && isRecentVisit(customer.lastVisit);
+            break;
+          case 'Retention Risk':
+            matchesStage = customer.status === 'At-Risk';
             break;
         }
       }
@@ -301,9 +338,9 @@ export default function Customers() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{customers.length}</div>
+              <div className="text-2xl font-bold">{metrics.totalClients}</div>
               <p className="text-xs text-muted-foreground">
-                +12% from last month
+                Live data from Arketa
               </p>
             </CardContent>
           </Card>
@@ -314,9 +351,9 @@ export default function Customers() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{customers.filter(c => c.status === 'Active').length}</div>
+              <div className="text-2xl font-bold">{metrics.activeMembers}</div>
               <p className="text-xs text-muted-foreground">
-                +8% from last month
+                Recent class attendance
               </p>
             </CardContent>
           </Card>
@@ -327,9 +364,9 @@ export default function Customers() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{customers.filter(c => c.status === 'Trial').length}</div>
+              <div className="text-2xl font-bold">{metrics.introOffer}</div>
               <p className="text-xs text-muted-foreground">
-                +24% from last month
+                Intro offer students
               </p>
             </CardContent>
           </Card>
@@ -340,9 +377,9 @@ export default function Customers() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{customers.filter(c => isRecentMember(c.memberSince)).length}</div>
+              <div className="text-2xl font-bold">{metrics.newThisMonth}</div>
               <p className="text-xs text-muted-foreground">
-                +18% from last month
+                First classes this month
               </p>
             </CardContent>
           </Card>

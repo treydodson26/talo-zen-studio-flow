@@ -2395,6 +2395,28 @@ export type Database = {
       }
     }
     Views: {
+      customer_metrics_view: {
+        Row: {
+          address: string | null
+          birthday: string | null
+          calculated_status: string | null
+          email: string | null
+          estimated_lifetime_value: number | null
+          first_class_date: string | null
+          first_seen: string | null
+          id: string | null
+          is_active_member: boolean | null
+          last_class_date: string | null
+          last_seen: string | null
+          marketing_email_opt_in: string | null
+          marketing_text_opt_in: string | null
+          name: string | null
+          phone: string | null
+          tags: string | null
+          total_classes_attended: number | null
+        }
+        Relationships: []
+      }
       customer_summary: {
         Row: {
           address: string | null
@@ -2478,6 +2500,42 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_customer_metrics_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_clients: number
+          active_members: number
+          trial_members: number
+          new_this_month: number
+          no_purchases: number
+          first_class_booked: number
+          intro_offer: number
+          bought_membership: number
+          retention_risk: number
+        }[]
+      }
+      get_filtered_customers: {
+        Args: { filter_stage?: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          marketing_email_opt_in: string
+          marketing_text_opt_in: string
+          tags: string
+          first_seen: string
+          last_seen: string
+          birthday: string
+          address: string
+          total_classes_attended: number
+          last_class_date: string
+          first_class_date: string
+          calculated_status: string
+          is_active_member: boolean
+          estimated_lifetime_value: number
+        }[]
       }
       update_customer_segments: {
         Args: Record<PropertyKey, never>
