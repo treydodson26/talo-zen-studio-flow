@@ -1,1 +1,4 @@
 project_id = "erpdhaicjwixewxuxouq"
+
+[functions.process-arketa-csv]
+verify_jwt = false

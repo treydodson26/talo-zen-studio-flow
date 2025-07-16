@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Customer, CustomerFilters } from '@/types/customers';
 import { supabase } from '@/integrations/supabase/client';
 import { CustomerProfileModal } from '@/components/customers/CustomerProfileModal';
+import { ImportSyncModal } from '@/components/customers/ImportSyncModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ import {
   TrendingUp,
   Calendar,
   Activity,
+  Upload,
 } from 'lucide-react';
 
 export default function Customers() {
@@ -53,6 +55,7 @@ export default function Customers() {
     boughtMembership: 0,
     retentionRisk: 0
   });
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Fetch customers and metrics from Supabase
   useEffect(() => {
@@ -260,6 +263,11 @@ export default function Customers() {
     window.open(`mailto:${customer.email}`, '_blank');
   };
 
+  const handleImportComplete = () => {
+    // Refresh data after import
+    window.location.reload();
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -331,58 +339,68 @@ export default function Customers() {
       {/* Conditional Content */}
       {activeStage === 'Dashboard' ? (
         // Dashboard View
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.totalClients}</div>
-              <p className="text-xs text-muted-foreground">
-                Live data from Arketa
-              </p>
-            </CardContent>
-          </Card>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Customer Overview</h2>
+            <Button onClick={() => setImportModalOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import & Sync
+            </Button>
+          </div>
           
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Members</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.activeMembers}</div>
-              <p className="text-xs text-muted-foreground">
-                Recent class attendance
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Trial Members</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.introOffer}</div>
-              <p className="text-xs text-muted-foreground">
-                Intro offer students
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.newThisMonth}</div>
-              <p className="text-xs text-muted-foreground">
-                First classes this month
-              </p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalClients}</div>
+                <p className="text-xs text-muted-foreground">
+                  Live data from Arketa
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.activeMembers}</div>
+                <p className="text-xs text-muted-foreground">
+                  Recent class attendance
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Trial Members</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.introOffer}</div>
+                <p className="text-xs text-muted-foreground">
+                  Intro offer students
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.newThisMonth}</div>
+                <p className="text-xs text-muted-foreground">
+                  First classes this month
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       ) : (
         // Table View
@@ -486,6 +504,13 @@ export default function Customers() {
         customer={selectedCustomer}
         open={modalOpen}
         onOpenChange={setModalOpen}
+      />
+
+      {/* Import & Sync Modal */}
+      <ImportSyncModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   );
