@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, CheckCircle, MessageCircle, CalendarDays } from "lucide-react";
+import { UserPlus, CheckCircle, MessageCircle, CalendarDays, Upload } from "lucide-react";
+import { ImportSyncModal } from "@/components/customers/ImportSyncModal";
 
 const actions = [
   {
@@ -12,11 +14,11 @@ const actions = [
     href: "/leads"
   },
   {
-    title: "Mark Attendance",
-    description: "Check in students",
-    icon: CheckCircle,
+    title: "Import & Sync",
+    description: "Upload Arketa CSV data",
+    icon: Upload,
     variant: "secondary" as const,
-    href: "#"
+    action: "import"
   },
   {
     title: "Send Message",
@@ -35,6 +37,19 @@ const actions = [
 ];
 
 export function QuickActions() {
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  const handleImportComplete = () => {
+    // Refresh data after import
+    window.location.reload();
+  };
+
+  const handleActionClick = (action: typeof actions[0]) => {
+    if (action.action === "import") {
+      setImportModalOpen(true);
+    }
+  };
+
   return (
     <Card className="shadow-card border-border/50">
       <CardHeader>
@@ -43,23 +58,45 @@ export function QuickActions() {
       <CardContent>
         <div className="grid gap-3 md:grid-cols-2">
           {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant}
-              className="h-auto p-4 flex flex-col items-start space-y-2 hover:shadow-soft transition-shadow"
-              asChild
-            >
-              <Link to={action.href}>
+            action.href ? (
+              <Button
+                key={index}
+                variant={action.variant}
+                className="h-auto p-4 flex flex-col items-start space-y-2 hover:shadow-soft transition-shadow"
+                asChild
+              >
+                <Link to={action.href}>
+                  <div className="flex items-center space-x-2">
+                    <action.icon className="h-5 w-5" />
+                    <span className="font-medium">{action.title}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{action.description}</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                key={index}
+                variant={action.variant}
+                className="h-auto p-4 flex flex-col items-start space-y-2 hover:shadow-soft transition-shadow"
+                onClick={() => handleActionClick(action)}
+              >
                 <div className="flex items-center space-x-2">
                   <action.icon className="h-5 w-5" />
                   <span className="font-medium">{action.title}</span>
                 </div>
                 <span className="text-sm text-muted-foreground">{action.description}</span>
-              </Link>
-            </Button>
+              </Button>
+            )
           ))}
         </div>
       </CardContent>
+
+      {/* Import & Sync Modal */}
+      <ImportSyncModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImportComplete={handleImportComplete}
+      />
     </Card>
   );
 }
