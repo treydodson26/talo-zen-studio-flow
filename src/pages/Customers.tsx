@@ -25,8 +25,8 @@ import {
   Download,
   MoreHorizontal,
   Eye,
-  MessageSquare,
-  Edit,
+  MessageCircle,
+  Mail,
 } from 'lucide-react';
 
 export default function Customers() {
@@ -206,11 +206,15 @@ export default function Customers() {
   };
 
   const handleSendMessage = (customer: Customer) => {
-    console.log('Send message to:', customer.name);
+    // Open WhatsApp with customer's phone number
+    if (customer.phone) {
+      window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}`, '_blank');
+    }
   };
 
-  const handleUpdateStatus = (customer: Customer) => {
-    console.log('Update status for:', customer.name);
+  const handleSendEmail = (customer: Customer) => {
+    // Open Gmail compose with customer's email
+    window.open(`mailto:${customer.email}`, '_blank');
   };
 
   return (
@@ -358,12 +362,12 @@ export default function Customers() {
                             View Profile
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleSendMessage(customer)}>
-                            <MessageSquare className="w-4 h-4 mr-2" />
+                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" />
                             Send Message
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(customer)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Update Status
+                          <DropdownMenuItem onClick={() => handleSendEmail(customer)}>
+                            <Mail className="w-4 h-4 mr-2 text-red-600" />
+                            Send Email
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
