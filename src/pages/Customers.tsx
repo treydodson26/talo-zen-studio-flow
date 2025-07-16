@@ -109,15 +109,21 @@ export default function Customers() {
 
   const customerStages = [
     { id: 'All', label: 'All', count: customers.length },
-    { id: 'Trial', label: 'Trial', count: customers.filter(c => c.status === 'Trial').length },
-    { id: 'Active', label: 'Active Member', count: customers.filter(c => c.status === 'Active').length },
-    { id: 'At-Risk', label: 'At-Risk', count: customers.filter(c => c.status === 'At-Risk').length },
-    { id: 'Expired', label: 'Expired', count: customers.filter(c => c.status === 'Expired').length },
-    { id: 'Prenatal', label: 'Prenatal', count: customers.filter(c => c.segment === 'Prenatal').length },
-    { id: 'Seniors', label: 'Seniors', count: customers.filter(c => c.segment === 'Seniors').length },
-    { id: 'Students', label: 'Students', count: customers.filter(c => c.segment === 'Students').length },
-    { id: 'Professionals', label: 'Professionals', count: customers.filter(c => c.segment === 'Professionals').length },
+    { id: 'No Purchases', label: 'No Purchases or Reservations', count: customers.filter(c => c.totalClasses === 0).length },
+    { id: 'Intro Offer', label: 'Intro Offer', count: customers.filter(c => c.status === 'Trial').length },
+    { id: 'Bought Membership', label: 'Bought Membership in the last 7 days', count: customers.filter(c => c.status === 'Active' && isRecentMember(c.memberSince)).length },
+    { id: 'Member', label: 'Member', count: customers.filter(c => c.status === 'Active').length },
+    { id: 'Active Member', label: 'Active Member', count: customers.filter(c => c.status === 'Active' && !isRecentVisit(c.lastVisit)).length },
+    { id: 'Retention', label: 'Retention', count: customers.filter(c => c.status === 'At-Risk').length },
+    { id: 'First class booked', label: 'First class booked', count: customers.filter(c => c.totalClasses === 1).length },
   ];
+
+  const isRecentMember = (memberSince: string) => {
+    const memberDate = new Date(memberSince);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - memberDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff <= 7;
+  };
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
@@ -128,10 +134,28 @@ export default function Customers() {
 
       let matchesStage = true;
       if (activeStage !== 'All') {
-        if (['Trial', 'Active', 'At-Risk', 'Expired'].includes(activeStage)) {
-          matchesStage = customer.status === activeStage;
-        } else if (['Prenatal', 'Seniors', 'Students', 'Professionals'].includes(activeStage)) {
-          matchesStage = customer.segment === activeStage;
+        switch (activeStage) {
+          case 'No Purchases':
+            matchesStage = customer.totalClasses === 0;
+            break;
+          case 'Intro Offer':
+            matchesStage = customer.status === 'Trial';
+            break;
+          case 'Bought Membership':
+            matchesStage = customer.status === 'Active' && isRecentMember(customer.memberSince);
+            break;
+          case 'Member':
+            matchesStage = customer.status === 'Active';
+            break;
+          case 'Active Member':
+            matchesStage = customer.status === 'Active' && !isRecentVisit(customer.lastVisit);
+            break;
+          case 'Retention':
+            matchesStage = customer.status === 'At-Risk';
+            break;
+          case 'First class booked':
+            matchesStage = customer.totalClasses === 1;
+            break;
         }
       }
 
@@ -192,25 +216,22 @@ export default function Customers() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>Dashboard</span>
-            <span>/</span>
             <span>Customers</span>
+            <span>›</span>
+            <span>Clients</span>
           </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Customers</h1>
+          <div>
+            <h1 className="text-2xl font-bold mb-1">Clients</h1>
             <div className="text-sm text-muted-foreground">
-              Customer information may be delayed by up to one hour when using segments
+              Client information may be delayed by up to one hour when using segments
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">More</span>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
             Add new
@@ -243,11 +264,11 @@ export default function Customers() {
       </div>
 
       {/* Search Bar */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search all customers"
+            placeholder="Search all clients"
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -274,12 +295,12 @@ export default function Customers() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Segment</TableHead>
-                <TableHead>Last Visit</TableHead>
-                <TableHead>Total Classes</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                <TableHead>NAME</TableHead>
+                <TableHead>EMAIL</TableHead>
+                <TableHead>TAGS</TableHead>
+                <TableHead>CREATED</TableHead>
+                <TableHead>LAST SEEN</TableHead>
+                <TableHead>ACTIONS</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -293,33 +314,36 @@ export default function Customers() {
                 filteredCustomers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center text-sm font-medium">
-                          {customer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium">{customer.name}</div>
-                          <div className="text-sm text-muted-foreground">{customer.email}</div>
-                        </div>
+                      <div className="font-medium">{customer.name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-muted-foreground">{customer.email}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {customer.segment !== 'General' ? customer.segment : '--'}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(customer.status)}>
-                        {customer.status}
-                      </Badge>
+                      <div className="text-sm">
+                        {new Date(customer.memberSince).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={getSegmentColor(customer.segment)}>
-                        {customer.segment}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className={isRecentVisit(customer.lastVisit) ? 'text-danger font-medium' : ''}>
-                        {new Date(customer.lastVisit).toLocaleDateString()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{customer.totalClasses}</span>
+                      <div className="text-sm">
+                        {customer.lastVisit === new Date().toISOString().split('T')[0] ? 
+                          '--' : 
+                          new Date(customer.lastVisit).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })
+                        }
+                      </div>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
