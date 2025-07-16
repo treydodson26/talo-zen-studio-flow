@@ -6,13 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Table,
   TableBody,
   TableCell,
@@ -42,12 +35,8 @@ export default function Customers() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [filters, setFilters] = useState<CustomerFilters>({
-    search: '',
-    status: 'All',
-    segment: 'All',
-    dateFilter: 'All',
-  });
+  const [activeStage, setActiveStage] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch customers from Supabase
   useEffect(() => {
@@ -118,38 +107,37 @@ export default function Customers() {
     return 'General';
   };
 
+  const customerStages = [
+    { id: 'All', label: 'All', count: customers.length },
+    { id: 'Trial', label: 'Trial', count: customers.filter(c => c.status === 'Trial').length },
+    { id: 'Active', label: 'Active Member', count: customers.filter(c => c.status === 'Active').length },
+    { id: 'At-Risk', label: 'At-Risk', count: customers.filter(c => c.status === 'At-Risk').length },
+    { id: 'Expired', label: 'Expired', count: customers.filter(c => c.status === 'Expired').length },
+    { id: 'Prenatal', label: 'Prenatal', count: customers.filter(c => c.segment === 'Prenatal').length },
+    { id: 'Seniors', label: 'Seniors', count: customers.filter(c => c.segment === 'Seniors').length },
+    { id: 'Students', label: 'Students', count: customers.filter(c => c.segment === 'Students').length },
+    { id: 'Professionals', label: 'Professionals', count: customers.filter(c => c.segment === 'Professionals').length },
+  ];
+
   const filteredCustomers = useMemo(() => {
     return customers.filter(customer => {
       const matchesSearch = 
-        customer.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        customer.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-        customer.phone?.toLowerCase().includes(filters.search.toLowerCase());
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.phone?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus = filters.status === 'All' || customer.status === filters.status;
-      const matchesSegment = filters.segment === 'All' || customer.segment === filters.segment;
-
-      let matchesDate = true;
-      if (filters.dateFilter !== 'All') {
-        const lastVisitDate = new Date(customer.lastVisit);
-        const now = new Date();
-        const daysDiff = Math.floor((now.getTime() - lastVisitDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        switch (filters.dateFilter) {
-          case 'This Week':
-            matchesDate = daysDiff <= 7;
-            break;
-          case 'This Month':
-            matchesDate = daysDiff <= 30;
-            break;
-          case '90+ Days':
-            matchesDate = daysDiff >= 90;
-            break;
+      let matchesStage = true;
+      if (activeStage !== 'All') {
+        if (['Trial', 'Active', 'At-Risk', 'Expired'].includes(activeStage)) {
+          matchesStage = customer.status === activeStage;
+        } else if (['Prenatal', 'Seniors', 'Students', 'Professionals'].includes(activeStage)) {
+          matchesStage = customer.segment === activeStage;
         }
       }
 
-      return matchesSearch && matchesStatus && matchesSegment && matchesDate;
+      return matchesSearch && matchesStage;
     });
-  }, [customers, filters]);
+  }, [customers, activeStage, searchQuery]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -209,74 +197,67 @@ export default function Customers() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
             <span>Dashboard</span>
             <span>/</span>
-            <span>Customer Management</span>
+            <span>Customers</span>
           </div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Customer Management</h1>
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              {loading ? 'Loading...' : `${customers.length} Customers`}
-            </Badge>
+            <h1 className="text-2xl font-bold">Customers</h1>
+            <div className="text-sm text-muted-foreground">
+              Customer information may be delayed by up to one hour when using segments
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Export Data
+            Export
           </Button>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            Add Customer
+            Add new
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 items-center bg-surface p-4 rounded-lg">
+      {/* Stage Tabs */}
+      <div className="border-b border-border">
+        <div className="flex gap-1 overflow-x-auto">
+          {customerStages.map((stage) => (
+            <button
+              key={stage.id}
+              onClick={() => setActiveStage(stage.id)}
+              className={`px-4 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
+                activeStage === stage.id
+                  ? 'border-primary text-primary font-medium'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {stage.label}
+              {stage.count > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-muted rounded-full">
+                  {stage.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search all customers"
             className="pl-10"
-            value={filters.search}
-            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Status</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Trial">Trial</SelectItem>
-            <SelectItem value="Expired">Expired</SelectItem>
-            <SelectItem value="At-Risk">At-Risk</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filters.segment} onValueChange={(value) => setFilters(prev => ({ ...prev, segment: value }))}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Segment" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Segments</SelectItem>
-            <SelectItem value="Prenatal">Prenatal</SelectItem>
-            <SelectItem value="Seniors">Seniors</SelectItem>
-            <SelectItem value="Students">Students</SelectItem>
-            <SelectItem value="Professionals">Professionals</SelectItem>
-            <SelectItem value="General">General</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={filters.dateFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, dateFilter: value }))}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Last Visit" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Time</SelectItem>
-            <SelectItem value="This Week">This Week</SelectItem>
-            <SelectItem value="This Month">This Month</SelectItem>
-            <SelectItem value="90+ Days">90+ Days</SelectItem>
-          </SelectContent>
-        </Select>
+        <Button variant="outline" size="sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+          </svg>
+        </Button>
       </div>
 
       {/* Table */}
