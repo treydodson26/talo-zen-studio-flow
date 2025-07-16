@@ -5,6 +5,7 @@ import { CustomerProfileModal } from '@/components/customers/CustomerProfileModa
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -27,6 +28,10 @@ import {
   Eye,
   MessageCircle,
   Mail,
+  Users,
+  TrendingUp,
+  Calendar,
+  Activity,
 } from 'lucide-react';
 
 export default function Customers() {
@@ -35,7 +40,7 @@ export default function Customers() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeStage, setActiveStage] = useState('All');
+  const [activeStage, setActiveStage] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch customers from Supabase
@@ -108,6 +113,7 @@ export default function Customers() {
   };
 
   const customerStages = [
+    { id: 'Dashboard', label: 'Dashboard', count: null },
     { id: 'All', label: 'All', count: customers.length },
     { id: 'No Purchases', label: 'No Purchases or Reservations', count: customers.filter(c => c.totalClasses === 0).length },
     { id: 'Intro Offer', label: 'Intro Offer', count: customers.filter(c => c.status === 'Trial').length },
@@ -257,7 +263,7 @@ export default function Customers() {
               }`}
             >
               {stage.label}
-              {stage.count > 0 && (
+              {stage.count !== null && stage.count > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 text-xs bg-muted rounded-full">
                   {stage.count}
                 </span>
@@ -285,100 +291,158 @@ export default function Customers() {
         </Button>
       </div>
 
-      {/* Table */}
-      <div className="bg-surface rounded-lg border">
-        {loading ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-muted-foreground">Loading customers...</div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center p-8">
-            <div className="text-destructive">{error}</div>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>NAME</TableHead>
-                <TableHead>EMAIL</TableHead>
-                <TableHead>TAGS</TableHead>
-                <TableHead>CREATED</TableHead>
-                <TableHead>LAST SEEN</TableHead>
-                <TableHead>ACTIONS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCustomers.length === 0 ? (
+      {/* Conditional Content */}
+      {activeStage === 'Dashboard' ? (
+        // Dashboard View
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{customers.length}</div>
+              <p className="text-xs text-muted-foreground">
+                +12% from last month
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{customers.filter(c => c.status === 'Active').length}</div>
+              <p className="text-xs text-muted-foreground">
+                +8% from last month
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Trial Members</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{customers.filter(c => c.status === 'Trial').length}</div>
+              <p className="text-xs text-muted-foreground">
+                +24% from last month
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{customers.filter(c => isRecentMember(c.memberSince)).length}</div>
+              <p className="text-xs text-muted-foreground">
+                +18% from last month
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        // Table View
+        <div className="bg-surface rounded-lg border">
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-muted-foreground">Loading customers...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-destructive">{error}</div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No customers found matching your filters.
-                  </TableCell>
+                  <TableHead>NAME</TableHead>
+                  <TableHead>EMAIL</TableHead>
+                  <TableHead>TAGS</TableHead>
+                  <TableHead>CREATED</TableHead>
+                  <TableHead>LAST SEEN</TableHead>
+                  <TableHead>ACTIONS</TableHead>
                 </TableRow>
-              ) : (
-                filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>
-                      <div className="font-medium">{customer.name}</div>
+              </TableHeader>
+              <TableBody>
+                {filteredCustomers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No customers found matching your filters.
                     </TableCell>
-                    <TableCell>
-                      <div className="text-muted-foreground">{customer.email}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {customer.segment !== 'General' ? customer.segment : '--'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {new Date(customer.memberSince).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric', 
-                          year: 'numeric' 
-                        })}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {customer.lastVisit === new Date().toISOString().split('T')[0] ? 
-                          '--' : 
-                          new Date(customer.lastVisit).toLocaleDateString('en-US', { 
+                  </TableRow>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="font-medium">{customer.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-muted-foreground">{customer.email}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {customer.segment !== 'General' ? customer.segment : '--'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {new Date(customer.memberSince).toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric', 
                             year: 'numeric' 
-                          })
-                        }
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewProfile(customer)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSendMessage(customer)}>
-                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" />
-                            Send Message
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSendEmail(customer)}>
-                            <Mail className="w-4 h-4 mr-2 text-red-600" />
-                            Send Email
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                          })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {customer.lastVisit === new Date().toISOString().split('T')[0] ? 
+                            '--' : 
+                            new Date(customer.lastVisit).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })
+                          }
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewProfile(customer)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendMessage(customer)}>
+                              <MessageCircle className="w-4 h-4 mr-2 text-green-600" />
+                              Send Message
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSendEmail(customer)}>
+                              <Mail className="w-4 h-4 mr-2 text-red-600" />
+                              Send Email
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      )}
 
       {/* Customer Profile Modal */}
       <CustomerProfileModal
