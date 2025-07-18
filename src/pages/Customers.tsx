@@ -31,6 +31,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { ImportSyncModal } from '@/components/customers/ImportSyncModal';
+import { WhatsAppMessageModal } from '@/components/customers/WhatsAppMessageModal';
 
 // Define interface for customer metrics view
 interface CustomerMetrics {
@@ -90,6 +91,8 @@ export default function Customers() {
   const [activeStage, setActiveStage] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const [selectedCustomerForMessage, setSelectedCustomerForMessage] = useState<CustomerMetrics | null>(null);
 
   // Map tab names to filter stages
   const getFilterStage = (tabName: string): FilterStage => {
@@ -191,9 +194,8 @@ export default function Customers() {
   };
 
   const handleSendMessage = (customer: CustomerMetrics) => {
-    if (customer.phone) {
-      window.open(`https://wa.me/${customer.phone.replace(/\D/g, '')}`, '_blank');
-    }
+    setSelectedCustomerForMessage(customer);
+    setWhatsAppModalOpen(true);
   };
 
   const handleSendEmail = (customer: CustomerMetrics) => {
@@ -493,6 +495,13 @@ export default function Customers() {
         isOpen={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         onImportComplete={handleImportComplete}
+      />
+      
+      {/* WhatsApp Message Modal */}
+      <WhatsAppMessageModal
+        isOpen={whatsAppModalOpen}
+        onClose={() => setWhatsAppModalOpen(false)}
+        customer={selectedCustomerForMessage}
       />
     </div>
   );
