@@ -76,8 +76,14 @@ Deno.serve(async (req) => {
       };
     }
 
+    // Get phone number ID from environment
+    const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+    if (!phoneNumberId) {
+      throw new Error('WhatsApp Phone Number ID not configured');
+    }
+
     // Send WhatsApp message via Meta API
-    const whatsappResponse = await fetch('https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages', {
+    const whatsappResponse = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${whatsappToken}`,
