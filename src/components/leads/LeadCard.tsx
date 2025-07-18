@@ -95,6 +95,17 @@ export function LeadCard({ lead, onViewDetails, onQuickAction }: LeadCardProps) 
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation();
+                onQuickAction(lead.id, 'whatsapp');
+              }}
+              className="text-green-600 border-green-200 hover:bg-green-50"
+            >
+              <MessageSquare className="h-4 w-4 fill-current" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
                 onQuickAction(lead.id, 'schedule');
               }}
             >

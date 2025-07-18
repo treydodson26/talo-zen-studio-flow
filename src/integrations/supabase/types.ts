@@ -445,6 +445,48 @@ export type Database = {
         }
         Relationships: []
       }
+      communication_log: {
+        Row: {
+          client_email: string
+          client_name: string | null
+          created_at: string | null
+          delivery_status: string | null
+          error_message: string | null
+          external_message_id: string | null
+          id: string
+          message_type: string
+          sent_at: string | null
+          sequence_day: number
+          template_key: string
+        }
+        Insert: {
+          client_email: string
+          client_name?: string | null
+          created_at?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          message_type: string
+          sent_at?: string | null
+          sequence_day: number
+          template_key: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string | null
+          created_at?: string | null
+          delivery_status?: string | null
+          error_message?: string | null
+          external_message_id?: string | null
+          id?: string
+          message_type?: string
+          sent_at?: string | null
+          sequence_day?: number
+          template_key?: string
+        }
+        Relationships: []
+      }
       communication_preferences: {
         Row: {
           class_reminders_email: boolean | null
@@ -2559,6 +2601,21 @@ export type Database = {
           p_is_substitute?: boolean
         }
         Returns: number
+      }
+      get_clients_needing_communication: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          client_name: string
+          first_name: string
+          client_email: string
+          phone_number: string
+          days_since_signup: number
+          template_key: string
+          message_type: string
+          subject: string
+          message_body: string
+          already_sent: boolean
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>

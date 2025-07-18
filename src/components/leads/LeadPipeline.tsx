@@ -24,7 +24,7 @@ export function LeadPipeline() {
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [quickActionLead, setQuickActionLead] = useState<Lead | null>(null);
-  const [quickActionType, setQuickActionType] = useState<'email' | 'sms' | 'schedule' | null>(null);
+  const [quickActionType, setQuickActionType] = useState<'email' | 'sms' | 'whatsapp' | 'schedule' | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [staffFilter, setStaffFilter] = useState("all");
@@ -143,7 +143,7 @@ export function LeadPipeline() {
     const lead = leads.find(l => l.id === leadId);
     if (lead) {
       setQuickActionLead(lead);
-      setQuickActionType(action as 'email' | 'sms' | 'schedule');
+      setQuickActionType(action as 'email' | 'sms' | 'whatsapp' | 'schedule');
     }
   };
 

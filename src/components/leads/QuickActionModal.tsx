@@ -13,10 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MessageSquare, Calendar, Send, Clock } from "lucide-react";
 import { Lead } from "@/types/leads";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuickActionModalProps {
   lead: Lead | null;
-  action: 'email' | 'sms' | 'schedule' | null;
+  action: 'email' | 'sms' | 'whatsapp' | 'schedule' | null;
   onClose: () => void;
   onComplete: (leadId: string, action: string, data: any) => void;
 }
@@ -65,6 +66,12 @@ const smsTemplates = {
   reminder: "Hi {{name}}! Don't forget about our 20% new student discount. Ready to book your first class? Let me know! 🌟 - Emily"
 };
 
+const whatsappTemplates = {
+  welcome: "Hi {{name}}! 🧘‍♀️ Thanks for your interest in Talo Yoga Studio! I'm Emily, the owner. Would you like to schedule a quick call this week to discuss your yoga goals and find the perfect class for you? Looking forward to connecting!",
+  followup: "Hi {{name}}! Just wanted to follow up on your yoga journey with us. Any questions about our classes or studio? I'm here to help you get started! 🌟",
+  reminder: "Hi {{name}}! Don't forget about our special 20% new student discount! Ready to book your first class? Let me know what works best for your schedule! 🧘‍♀️✨"
+};
+
 export function QuickActionModal({ lead, action, onClose, onComplete }: QuickActionModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -77,6 +84,10 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
     phone: lead?.phone || '',
     message: '',
     smsTemplate: 'welcome',
+    // WhatsApp fields
+    whatsappPhone: lead?.phone || '',
+    whatsappMessage: '',
+    whatsappTemplate: 'welcome',
     // Schedule fields
     followupDate: '',
     followupTime: '',
@@ -89,21 +100,51 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (action === 'whatsapp') {
+        // Send WhatsApp message using our edge function
+        const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+          body: {
+            to: formData.whatsappPhone,
+            message: formData.whatsappMessage,
+            lead_id: lead?.id,
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Success!",
+          description: `WhatsApp message sent to ${lead?.name}`,
+        });
+      } else {
+        // Simulate API call for other actions
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const actionText = action === 'email' ? 'Email sent' : 
+                          action === 'sms' ? 'SMS sent' : 
+                          'Follow-up scheduled';
+        
+        toast({
+          title: "Success!",
+          description: `${actionText} to ${lead?.name}`,
+        });
+      }
+
       onComplete(lead!.id, action!, formData);
       onClose();
-      
-      const actionText = action === 'email' ? 'Email sent' : 
-                        action === 'sms' ? 'SMS sent' : 
-                        'Follow-up scheduled';
-      
+    } catch (error) {
+      console.error('Error:', error);
       toast({
-        title: "Success!",
-        description: `${actionText} to ${lead?.name}`,
+        title: "Error",
+        description: `Failed to ${action === 'whatsapp' ? 'send WhatsApp message' : action}. Please try again.`,
+        variant: "destructive",
       });
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTemplateChange = (templateKey: string) => {
@@ -122,6 +163,13 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
         smsTemplate: templateKey,
         message: template.replace('{{name}}', lead?.name || '')
       }));
+    } else if (action === 'whatsapp') {
+      const template = whatsappTemplates[templateKey as keyof typeof whatsappTemplates];
+      setFormData(prev => ({
+        ...prev,
+        whatsappTemplate: templateKey,
+        whatsappMessage: template.replace('{{name}}', lead?.name || '')
+      }));
     }
   };
 
@@ -134,10 +182,12 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
           <DialogTitle className="flex items-center space-x-2">
             {action === 'email' && <Mail className="h-5 w-5" />}
             {action === 'sms' && <MessageSquare className="h-5 w-5" />}
+            {action === 'whatsapp' && <MessageSquare className="h-5 w-5 text-green-600" />}
             {action === 'schedule' && <Calendar className="h-5 w-5" />}
             <span>
               {action === 'email' && 'Send Email'}
               {action === 'sms' && 'Send SMS'}
+              {action === 'whatsapp' && 'Send WhatsApp'}
               {action === 'schedule' && 'Schedule Follow-up'}
             </span>
             <span className="text-muted-foreground">to {lead.name}</span>
@@ -238,6 +288,50 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
             </>
           )}
 
+          {action === 'whatsapp' && (
+            <>
+              <div className="space-y-2">
+                <Label>Template</Label>
+                <Select value={formData.whatsappTemplate} onValueChange={handleTemplateChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="welcome">Welcome WhatsApp</SelectItem>
+                    <SelectItem value="followup">Follow-up WhatsApp</SelectItem>
+                    <SelectItem value="reminder">Reminder WhatsApp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsappPhone">Phone Number</Label>
+                <Input
+                  id="whatsappPhone"
+                  type="tel"
+                  placeholder="+1234567890"
+                  value={formData.whatsappPhone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whatsappPhone: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="whatsappMessage">Message</Label>
+                <Textarea
+                  id="whatsappMessage"
+                  rows={4}
+                  value={formData.whatsappMessage}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whatsappMessage: e.target.value }))}
+                  required
+                />
+                <div className="text-sm text-muted-foreground text-right">
+                  {formData.whatsappMessage.length} characters
+                </div>
+              </div>
+            </>
+          )}
+
           {action === 'schedule' && (
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -300,13 +394,15 @@ export function QuickActionModal({ lead, action, onClose, onComplete }: QuickAct
                 <>
                   <Clock className="h-4 w-4 mr-2 animate-spin" />
                   {action === 'email' ? 'Sending...' : 
-                   action === 'sms' ? 'Sending...' : 'Scheduling...'}
+                   action === 'sms' ? 'Sending...' : 
+                   action === 'whatsapp' ? 'Sending...' : 'Scheduling...'}
                 </>
               ) : (
                 <>
                   {action === 'schedule' ? <Calendar className="h-4 w-4 mr-2" /> : <Send className="h-4 w-4 mr-2" />}
                   {action === 'email' ? 'Send Email' : 
-                   action === 'sms' ? 'Send SMS' : 'Schedule Follow-up'}
+                   action === 'sms' ? 'Send SMS' : 
+                   action === 'whatsapp' ? 'Send WhatsApp' : 'Schedule Follow-up'}
                 </>
               )}
             </Button>
